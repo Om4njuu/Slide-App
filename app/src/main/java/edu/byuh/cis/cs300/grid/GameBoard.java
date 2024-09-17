@@ -1,3 +1,5 @@
+package edu.byuh.cis.cs300.grid;
+
 public class GameBoard {
 
 	private final int DIM = 5;
@@ -54,9 +56,9 @@ public class GameBoard {
 	}
 	
 	public int checkForWin() {
-		int winner = Player.BLANK;
-		int winnerO = Player.BLANK; //new variable
-		int winnerX = Player.BLANK; //new variable
+		int winner = Player.BLANK.ordinal();
+		int winnerO = Player.BLANK.ordinal(); //new variable
+		int winnerX = Player.BLANK.ordinal(); //new variable
 
 		//check all rows
 		for (int i=0; i<DIM; ++i) {
@@ -78,9 +80,9 @@ public class GameBoard {
 				//new code to check for tie
 				if (win) {
 					if (currentCell == Player.X) {
-						winnerX = Player.X;
+						winnerX = Player.X.ordinal();
 					} else {
-						winnerO = Player.O;
+						winnerO = Player.O.ordinal();
 					}
 				}
 			}
@@ -106,9 +108,9 @@ public class GameBoard {
 				//new code to check for tie
 				if (win) {
 					if (currentCell == Player.X) {
-						winnerX = Player.X;
+						winnerX = Player.X.ordinal();
 					} else {
-						winnerO = Player.O;
+						winnerO = Player.O.ordinal();
 					}
 				}
 				
@@ -117,38 +119,38 @@ public class GameBoard {
 		
 		//check top-left -> bottom-right diagonal
 		if (grid[0][0] != Player.BLANK) {
-			winner = grid[0][0];
+			winner = grid[0][0].ordinal();
 			for (int i=0; i<DIM; ++i) {
-				if (grid[i][i] != winner) {
-					winner = Player.BLANK;
+				if (grid[i][i].ordinal() != winner) {
+					winner = Player.BLANK.ordinal();
 					break;
 				}
 			}
-			if (winner != Player.BLANK) {
+			if (winner != Player.BLANK.ordinal()) {
 				return winner; //5 in a diagonal!
 			}
 		}
 
 		//check bottom-left -> top-right diagonal
 		if (grid[DIM-1][0] != Player.BLANK) {
-			winner = grid[DIM-1][0];
+			winner = grid[DIM-1][0].ordinal();
 			for (int i=0; i<DIM; ++i) {
-				if (grid[DIM-1-i][i] != winner) {
-					winner = Player.BLANK;
+				if (grid[DIM-1-i][i].ordinal() != winner) {
+					winner = Player.BLANK.ordinal();
 					break;
 				}
 			}
-			if (winner != Player.BLANK) {
+			if (winner != Player.BLANK.ordinal()) {
 				return winner; //5 in a diagonal!
 			}
 		}
 		//new code to check for tie
-		if (winnerX == Player.X && winnerO == Player.O) {
-			return Player.TIE;
-		} else if (winnerX == Player.X) {
-			return Player.X;
-		} else if (winnerO == Player.O) {
-			return Player.O;
+		if (winnerX == Player.X.ordinal() && winnerO == Player.O.ordinal()) {
+			return Player.TIE.ordinal();
+		} else if (winnerX == Player.X.ordinal()) {
+			return Player.X.ordinal();
+		} else if (winnerO == Player.O.ordinal()) {
+			return Player.O.ordinal();
 		} else {
 			return winner;
 		}
@@ -172,7 +174,7 @@ public class GameBoard {
 				if (grid[i][j] == Player.BLANK) {
 					System.out.print(" ");
 				} else {
-					System.out.print(Player.toString(grid[i][j]));
+					System.out.print(grid[i][j].toString());
 				}
 			}
 			System.out.println("|");
@@ -186,6 +188,6 @@ public class GameBoard {
 	}
 
 	public int getCurrentPlayer() {
-		return whoseTurnIsIt;
+		return whoseTurnIsIt.ordinal();
 	}
 }
