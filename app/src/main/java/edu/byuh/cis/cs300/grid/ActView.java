@@ -10,12 +10,22 @@ public class ActView extends View {
 
     private Paint blackLine;
 
+    /**
+     * Custom view class for drawing the game grid on the screen.
+     *
+     * @param c The context in which the view is running.
+     */
     public ActView(Context c) {
         super(c);
         blackLine = new Paint();
         blackLine.setColor(Color.BLACK);
     }
 
+    /**
+     * Draws the game grid onto the canvas based on screen dimensions.
+     *
+     * @param c The canvas on which the grid is drawn.
+     */
     @Override
     public void onDraw(Canvas c) {
         super.onDraw(c);

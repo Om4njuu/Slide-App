@@ -5,9 +5,13 @@ public class GameBoard {
 	private final int DIM = 5;
 	private Player[][] grid;
 	private Player whoseTurnIsIt;
-	
+
+	/**
+	 * Constructs a 5x5 game board with all cells initially set to BLANK.
+	 * X starts as the first player.
+	 */
 	public GameBoard() {
-		//Create a 5x5 gameboard of BLANK cells
+		//create a 5x5 gameboard of BLANK cells
 		grid = new Player[DIM][DIM];
 		for (int i=0; i<DIM; ++i) {
 			for (int j=0; j<DIM; ++j) {
@@ -15,10 +19,16 @@ public class GameBoard {
 			}
 		}
 
-		//Arbitrarily, we make X the first player.
+		//arbitrarily, we make X the first player.
 		whoseTurnIsIt = Player.X;
 	}
-	
+
+	/**
+	 * Submits a move for the current player and updates the game board.
+	 *
+	 * @param move The move to be submitted ('1'-'5' for columns, 'A'-'E' for rows).
+	 * @param p The player making the move (X or O).
+	 */
 	public void submitMove(char move, Player p) {
 		if (move >= '1' && move <= '5') {
 			//vertical move, move tokens down
@@ -54,7 +64,12 @@ public class GameBoard {
 		//change whose turn it is, switch players
 		whoseTurnIsIt = (whoseTurnIsIt == Player.X) ? Player.O : Player.X;
 	}
-	
+
+	/**
+	 * Checks if a player has won the game.
+	 *
+	 * @return An integer representing the winning player (X or O), TIE, or BLANK if no winner yet.
+	 */
 	public int checkForWin() {
 		int winner = Player.BLANK.ordinal();
 		int winnerO = Player.BLANK.ordinal(); //new variable
@@ -156,7 +171,10 @@ public class GameBoard {
 		}
 		//return winner; //old code
 	}
-	
+
+	/**
+	 * Draws the current state of the game board to the console.
+	 */
 	public void consoleDraw() {
 		System.out.print("  ");
 		for (int i=0; i<DIM; ++i) {
@@ -187,6 +205,11 @@ public class GameBoard {
 		
 	}
 
+	/**
+	 * Gets the current player whose turn it is.
+	 *
+	 * @return The ordinal value of the current player (X or O).
+	 */
 	public int getCurrentPlayer() {
 		return whoseTurnIsIt.ordinal();
 	}
