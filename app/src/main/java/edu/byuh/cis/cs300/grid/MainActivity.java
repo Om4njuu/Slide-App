@@ -4,9 +4,11 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import edu.byuh.cis.cs300.grid.ui.GridView;
+
 public class MainActivity extends AppCompatActivity {
 
-    private ActView view;
+    private GridView view;
 
     /**
      * Initializes the activity and sets the custom view for displaying the game grid.
@@ -16,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        view = new ActView(this);
+        view = new GridView(this);
         setContentView(view);
     }
 }
