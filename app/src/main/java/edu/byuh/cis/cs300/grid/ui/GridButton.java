@@ -15,9 +15,11 @@ import edu.byuh.cis.cs300.grid.R;
  */
 public class GridButton {
     private Bitmap img;
+    private Bitmap pressedImg;
     private RectF bounds;
     private char label;
-    private ArrayList<GridButton> buttons;
+    ArrayList<GridButton> buttons;
+    private boolean pressed; //
 
     /**
      * Constructor for creating buttons along the grid's border.
@@ -30,8 +32,11 @@ public class GridButton {
         buttons = new ArrayList<>();
         img = BitmapFactory.decodeResource(res, R.drawable.unpressed_button);
         img = Bitmap.createScaledBitmap(img, (int)cellSize, (int)cellSize, true);
+        pressedImg = BitmapFactory.decodeResource(res, R.drawable.pressed_button); // loading pressed image
+        pressedImg = Bitmap.createScaledBitmap(pressedImg, (int)cellSize, (int)cellSize, true);
+        pressed = false; //initializing to false
 
-        //Create buttons for numeric and alphabetic labels.
+        //create buttons for numeric and alphabetic labels.
         for (int i = 0; i < 5; i++) {
             buttons.add(new GridButton((char)('1' + i), gridX + cellSize * i, gridY - cellSize, cellSize, res));
         }
@@ -54,6 +59,9 @@ public class GridButton {
         this.bounds = new RectF(x, y, x + size, y + size);
         this.img = BitmapFactory.decodeResource(res, R.drawable.unpressed_button);
         this.img = Bitmap.createScaledBitmap(this.img, (int)size, (int)size, false);
+        this.pressedImg = BitmapFactory.decodeResource(res, R.drawable.pressed_button);
+        this.pressedImg = Bitmap.createScaledBitmap(this.pressedImg, (int)size, (int)size, false);
+        this.pressed = false; // initializing to false
     }
 
     /**
@@ -62,7 +70,12 @@ public class GridButton {
      */
     public void draw(Canvas c) {
         for (GridButton btn : buttons) {
-            c.drawBitmap(btn.img, btn.bounds.left, btn.bounds.top, null);
+            //draw either the pressed or unpressed image depending on the state
+            if (btn.pressed) {
+                c.drawBitmap(btn.pressedImg, btn.bounds.left, btn.bounds.top, null);
+            } else {
+                c.drawBitmap(btn.img, btn.bounds.left, btn.bounds.top, null);
+            }
         }
     }
 
@@ -73,5 +86,29 @@ public class GridButton {
      */
     public void setLocation(float x, float y) {
         bounds.offsetTo(x, y);
+    }
+
+    /**
+     * Checks if a point (x, y) is inside the button.
+     * @param x the x coordinate.
+     * @param y the y coordinate.
+     * @return true if the point is inside the button's bounds, false otherwise.
+     */
+    public boolean contains(float x, float y) {
+        return bounds.contains(x, y);
+    }
+
+    /**
+     * Sets the button to the pressed state.
+     */
+    public void press() {
+        pressed = true;
+    }
+
+    /**
+     * Sets the button to the unpressed state.
+     */
+    public void release() {
+        pressed = false;
     }
 }
