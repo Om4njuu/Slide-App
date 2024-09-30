@@ -74,7 +74,7 @@ public class GridView extends View {
                         break;
                     }
                 }
-                //if no button was pressed, show a toast message
+                //if no button was pressed or pressed somewhere else on screen, show a toast message
                 if (!buttonPressed) {
                     Toast.makeText(getContext(), "Touch the button", Toast.LENGTH_SHORT).show();
                 }

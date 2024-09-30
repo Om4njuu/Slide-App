@@ -19,7 +19,7 @@ public class GridButton {
     private RectF bounds;
     private char label;
     ArrayList<GridButton> buttons;
-    private boolean pressed; //
+    private boolean pressed;
 
     /**
      * Constructor for creating buttons along the grid's border.
