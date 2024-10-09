@@ -92,7 +92,7 @@ public class GuiToken {
 
         //check if the token is close enough to the target
         if (Math.abs(bounds.left - targetX) < 5 && Math.abs(bounds.top - targetY) < 5) {
-            //snap the token to the target position and stop movement
+            //snap the token to the target position and stop movement.
             bounds.offsetTo(targetX, targetY);
             velocityX = 0;
             velocityY = 0;

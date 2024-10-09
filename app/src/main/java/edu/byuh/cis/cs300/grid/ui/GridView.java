@@ -142,7 +142,7 @@ public class GridView extends View {
         GuiToken newToken = new GuiToken(tokenImage, tokenBounds, player);
         tokens.add(newToken);
 
-        //set target and velocity based on which button was pressed
+        //set target and velocity based on which button was pressed.
         if (btn.isTopRow()) {
             newToken.setTarget(tokenX, tokenY + btn.bounds.height()); // Move down
             newToken.setVelocity(0, 10);
