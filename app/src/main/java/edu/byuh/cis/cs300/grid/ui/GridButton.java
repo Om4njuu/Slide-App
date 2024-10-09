@@ -16,7 +16,7 @@ import edu.byuh.cis.cs300.grid.R;
 public class GridButton {
     private Bitmap img;
     private Bitmap pressedImg;
-    private RectF bounds;
+    RectF bounds;
     private char label;
     ArrayList<GridButton> buttons;
     private boolean pressed;
@@ -86,6 +86,22 @@ public class GridButton {
      */
     public void setLocation(float x, float y) {
         bounds.offsetTo(x, y);
+    }
+
+    /**
+     * Check if this button is part of the top row (numeric labels).
+     * @return true if the button is part of the top row, false otherwise.
+     */
+    public boolean isTopRow() {
+        return label >= '1' && label <= '5';  // Numeric labels correspond to the top row
+    }
+
+    /**
+     * Check if this button is part of the left column (alphabetic labels).
+     * @return true if the button is part of the left column, false otherwise.
+     */
+    public boolean isLeftColumn() {
+        return label >= 'A' && label <= 'E';  // Alphabetic labels correspond to the left column
     }
 
     /**

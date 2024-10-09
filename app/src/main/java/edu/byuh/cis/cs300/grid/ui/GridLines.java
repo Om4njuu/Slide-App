@@ -52,6 +52,14 @@ public class GridLines {
     }
 
     /**
+     * simple "getter" that returns the topmost y coordinate of the grid
+     * @return
+     */
+    public float getLeft() {
+        return bounds.left;
+    }
+
+    /**
      * draw the grid onto the screen
      * @param c the Canvas object, provided by the View
      */
