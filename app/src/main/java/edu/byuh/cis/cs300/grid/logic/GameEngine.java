@@ -1,21 +1,20 @@
 package edu.byuh.cis.cs300.grid.logic;
 
 /**
- * The GameBoard class is the "brains" of this program. It maintains the state
- * of the gameboard, handles moves, and decides who wins. The only thing it
+ * The GameEngine class is the "brains" of this program. It maintains the state
+ * of the GameEngine, handles moves, and decides who wins. The only thing it
  * does NOT do is handle user input/output. That part is handled by the Main class.
- * @author draperg
  *
  */
-public class GameBoard {
+public class GameEngine {
 
 	/**
-	 * grid is a two-dimensional (5x5) array representing the actual gameboard
+	 * grid is a two-dimensional (5x5) array representing the actual GameEngine
 	 */
 	private Player[][] grid;
 
 	/**
-	 * DIM is set to 5. Change this if you want a bigger/smaller gameboard.
+	 * DIM is set to 5. Change this if you want a bigger/smaller GameEngine.
 	 * The "true" Slide game uses a 5x5 board.
 	 */
 	private final int DIM = 5;
@@ -26,18 +25,18 @@ public class GameBoard {
 	private Player currentPlayer;
 
 	/**
-	 * Constructor for our GameBoard class. Initializes the gameboard to blank.
+	 * Constructor for our GameEngine class. Initializes the GameEngine to blank.
 	 * Arbitrarily sets X as the first player. I guess you could change it to O
 	 * if you want. Or better yet, make it random.
 	 */
-	public GameBoard() {
+	public GameEngine() {
 		grid = new Player[DIM][DIM];
 		clear();
 		currentPlayer = Player.X;
 	}
 
 	/**
-	 * Just "blanks out" the gameboard.
+	 * Just "blanks out" the GameEngine.
 	 */
 	public void clear() {
 		for (int i=0; i<DIM; i++) {
