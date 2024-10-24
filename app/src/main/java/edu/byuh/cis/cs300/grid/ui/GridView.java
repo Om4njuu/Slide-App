@@ -1,174 +1,206 @@
 package edu.byuh.cis.cs300.grid.ui;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.RectF;
-import android.os.Handler;
-import android.os.Message;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import edu.byuh.cis.cs300.grid.R;
-import edu.byuh.cis.cs300.grid.logic.Player;
+import edu.byuh.cis.cs300.grid.logic.GameEngine;
+import edu.byuh.cis.cs300.grid.logic.GameHandler;
+import edu.byuh.cis.cs300.grid.logic.TickListener;
 
-public class GridView extends View {
+/**
+ * GridView represents the user interface for the game grid. It handles
+ * the drawing of the grid and tokens, as well as user interactions like
+ * pressing buttons and token movements.
+ */
+public class GridView extends View implements TickListener {
 
     private GridLines grid;
-    private GridButton gridButton;
     private boolean firstRun;
-    private ArrayList<GuiToken> tokens;
-    private boolean isXTurn;
+    private GridButton[] buttons;
+    private List<GuiToken> tokens;
+    private GameEngine engine;
     private GameHandler handler;
 
     /**
-     * Constructor for creating the GridView.
-     *
-     * @param context the context in which the view is being created.
+     * Constructor for GridView.
+     * 
+     * @param context the application context
      */
     public GridView(Context context) {
         super(context);
         firstRun = true;
+        buttons = new GridButton[10];
         tokens = new ArrayList<>();
-        isXTurn = true;
+        engine = new GameEngine();
         handler = new GameHandler();
+        handler.registerListener(this);
     }
 
     /**
-     * Draws the grid, buttons, and tokens on the canvas.
+     * This method is called when the view is drawn on the screen.
+     * It initializes the grid and buttons on the first run and redraws
+     * the grid and tokens on each subsequent draw.
      *
-     * @param c the Canvas object used to draw the grid, buttons, and tokens.
+     * @param c the Canvas on which the background will be drawn
      */
     @Override
     public void onDraw(Canvas c) {
         super.onDraw(c);
         c.drawColor(Color.WHITE);
-
         if (firstRun) {
-            //initialize grid and buttons on first draw
-            float w = c.getWidth();
-            float unit = w / 16f;
-            float gridX = unit * 2.5f;
-            float cellSize = unit * 2.3f;
-            float gridY = unit * 9;
-
-            grid = new GridLines(gridX, gridY, cellSize);
-            gridButton = new GridButton(getResources(), gridX, gridY, cellSize);
-
+            init();
             firstRun = false;
         }
 
-        //draw the grid and buttons
         grid.draw(c);
-        gridButton.draw(c);
-
-        //draw all tokens in the arraylist
         for (GuiToken token : tokens) {
             token.draw(c);
+        }
+        for (GridButton b : buttons) {
+            b.draw(c);
         }
     }
 
     /**
-     * Handle touch events for pressing and releasing buttons.
+     * Handles user touch events. It processes button presses,
+     * moves tokens, and handles token movements.
      *
-     * @param event the MotionEvent object containing touch information.
-     * @return true to indicate that the touch event was handled.
+     * @param m the MotionEvent object containing full information about the event
+     * @return true if the event was handled, false otherwise
      */
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                boolean buttonPressed = false;
-
-                //loop through all buttons to see if one is touched
-                for (GridButton btn : gridButton.buttons) {
-                    if (btn.contains(x, y)) {
-                        //if a button is pressed, create a token and add it to the list
-                        createToken(btn);
-                        invalidate();  // Redraw the view
-                        buttonPressed = true;
-                        break;
-                    }
-                }
-
-                //if no button was pressed, show a toast message
-                if (!buttonPressed) {
-                    Toast.makeText(getContext(), "Touch the button", Toast.LENGTH_SHORT).show();
-                }
-                break;
-
-            case MotionEvent.ACTION_UP:
-                //release all buttons when the user lifts their finger
-                for (GridButton btn : gridButton.buttons) {
-                    btn.release();
-                }
-                invalidate();  //redraw the view
-                break;
+    public boolean onTouchEvent(MotionEvent m) {
+        if (GuiToken.isAnyTokenMoving()) {
+            return true; // Ignore touch events if tokens are still moving
         }
+
+        if (m.getAction() == MotionEvent.ACTION_DOWN) {
+            float x = m.getX();
+            float y = m.getY();
+            boolean missed = true;
+            for (GridButton b : buttons) {
+                if (b.contains(x, y)) {
+                    b.press();
+                    GuiToken token = new GuiToken(engine.getCurrentPlayer(), b, getResources());
+                    engine.submitMove(b.getLabel());
+                    tokens.add(token);
+                    handler.registerListener(token);
+                    handleTokenMovement(token, b);
+                    missed = false;
+                }
+            }
+            if (missed) {
+                Toast t = Toast.makeText(getContext(), "Please touch a button", Toast.LENGTH_SHORT);
+                t.show();
+            }
+        } else if (m.getAction() == MotionEvent.ACTION_UP) {
+            for (GridButton b : buttons) {
+                b.release();
+            }
+        }
+        invalidate();
         return true;
     }
 
     /**
-     * Creates a token behind the pressed button and adds it to the list of tokens.
-     * Alternates between X and O tokens.
-     *
-     * @param btn The button that was pressed.
+     * This method is called at regular intervals (ticks) to update the game state.
+     * It forces the view to be redrawn on each tick.
      */
-    private void createToken(GridButton btn) {
-        float tokenSize = btn.bounds.width() * 0.8f; // Scale down the token size
-        float tokenX = btn.bounds.left + (btn.bounds.width() - tokenSize) / 2;
-        float tokenY = btn.bounds.top + (btn.bounds.height() - tokenSize) / 2;
-        RectF tokenBounds = new RectF(tokenX, tokenY, tokenX + tokenSize, tokenY + tokenSize);
+    @Override
+    public void onTick() {
+        invalidate();
+    }
 
-        Bitmap tokenImage;
-        Player player;
-        if (isXTurn) {
-            tokenImage = BitmapFactory.decodeResource(getResources(), R.drawable.player_x);
-            player = Player.X;
-        } else {
-            tokenImage = BitmapFactory.decodeResource(getResources(), R.drawable.player_o);
-            player = Player.O;
-        }
+    /**
+     * Initializes the grid layout and positions the buttons on the grid.
+     * This method is only called during the first drawing of the view.
+     */
+    private void init() {
+        float w = getWidth();
+        float h = getHeight();
+        float unit = w / 16f;
+        float gridX = unit * 2.5f;
+        float cellSize = unit * 2.3f;
+        float gridY = unit * 9;
+        grid = new GridLines(gridX, gridY, cellSize);
+        float buttonTop = gridY - cellSize;
+        float buttonLeft = gridX - cellSize;
 
-        tokenImage = Bitmap.createScaledBitmap(tokenImage, (int) tokenSize, (int) tokenSize, true);
-        GuiToken newToken = new GuiToken(tokenImage, tokenBounds, player);
-        tokens.add(newToken);
+        buttons[0] = new GridButton('1', this, buttonLeft + cellSize * 1, buttonTop, cellSize);
+        buttons[1] = new GridButton('2', this, buttonLeft + cellSize * 2, buttonTop, cellSize);
+        buttons[2] = new GridButton('3', this, buttonLeft + cellSize * 3, buttonTop, cellSize);
+        buttons[3] = new GridButton('4', this, buttonLeft + cellSize * 4, buttonTop, cellSize);
+        buttons[4] = new GridButton('5', this, buttonLeft + cellSize * 5, buttonTop, cellSize);
 
-        //set target and velocity based on which button was pressed.
-        if (btn.isTopRow()) {
-            newToken.setTarget(tokenX, tokenY + btn.bounds.height()); // Move down
-            newToken.setVelocity(0, 10);
-        } else if (btn.isLeftColumn()) {
-            newToken.setTarget(tokenX + btn.bounds.width(), tokenY); // Move right
-            newToken.setVelocity(10, 0);
-        }
+        buttons[5] = new GridButton('A', this, buttonLeft, buttonTop + cellSize * 1, cellSize);
+        buttons[6] = new GridButton('B', this, buttonLeft, buttonTop + cellSize * 2, cellSize);
+        buttons[7] = new GridButton('C', this, buttonLeft, buttonTop + cellSize * 3, cellSize);
+        buttons[8] = new GridButton('D', this, buttonLeft, buttonTop + cellSize * 4, cellSize);
+        buttons[9] = new GridButton('E', this, buttonLeft, buttonTop + cellSize * 5, cellSize);
+    }
 
-        //toggle turn between X and O
-        isXTurn = !isXTurn;
+    /**
+     * Handles the movement of tokens based on button presses. It checks
+     * whether a button belongs to the top row or the left column and moves
+     * the tokens accordingly.
+     *
+     * @param newToken the newly created token to be moved
+     * @param button the button that was pressed to create the token
+     */
+    private void handleTokenMovement(GuiToken newToken, GridButton button) {
+        List<GuiToken> neighbors = new ArrayList<>();
+        neighbors.add(newToken);
+        char col = button.getLabel();
 
-        //start the movement handler when a token is added
-        if (tokens.size() == 1) {
-            handler.sendEmptyMessage(0); //start handling movements
+        if (button.isTopButton()) {
+            for (char row = 'A'; row <= 'E'; row++) {
+                GuiToken token = findTokenAtPosition(row, col);
+                if (token != null) {
+                    neighbors.add(token);
+                } else {
+                    break;
+                }
+            }
+            for (GuiToken token : neighbors) {
+                token.moveDown();
+                token.position.row++;
+            }
+        } else if (button.isLeftButton()) {
+            for (char column = '1'; column <= '5'; column++) {
+                GuiToken token = findTokenAtPosition(button.getLabel(), column);
+                if (token != null) {
+                    neighbors.add(token);
+                } else {
+                    break;
+                }
+            }
+            for (GuiToken token : neighbors) {
+                token.moveRight();
+                token.position.column++;
+            }
         }
     }
 
-    private class GameHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            for (GuiToken token : tokens) {
-                token.move(); //move each token
+    /**
+     * Searches for a token at a given grid position.
+     *
+     * @param row the row character (A-E) of the grid
+     * @param column the column character (1-5) of the grid
+     * @return the GridToken at the given position, or null if no token is found
+     */
+    private GuiToken findTokenAtPosition(char row, char column) {
+        for (GuiToken token : tokens) {
+            if (token.position.row == row && token.position.column == column) {
+                return token;
             }
-
-            invalidate(); //redraw
-            sendEmptyMessageDelayed(0, 16); //call this method again after 16ms (~60 FPS)
         }
+        return null;
     }
 }
