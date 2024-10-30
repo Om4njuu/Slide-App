@@ -11,146 +11,159 @@ import edu.byuh.cis.cs300.grid.R;
 import edu.byuh.cis.cs300.grid.logic.Player;
 import edu.byuh.cis.cs300.grid.logic.TickListener;
 
-/**
- * This class represents a token in a grid-based game. It can be moved and drawn on a canvas.
- */
 public class GuiToken implements TickListener {
     private Player player;
     private RectF bounds;
     private PointF velocity;
-    private PointF destination;
-    private float tolerance;
     private Bitmap image;
-    GridPosition position;
+    private GridPosition gp;
     private static int movers = 0;
+    private int stepCounter;
+    private final int STEPS = 11;
+    private boolean falling = false;
 
-    /**
-     * Nested class representing the grid position of the token.
-     */
-    public static class GridPosition {
+    public class GridPosition {
         public char row;
-        public char column;
-
-        /**
-         * Constructor to create a GridPosition with a specific row and column.
-         *
-         * @param row    the row character
-         * @param column the column character
-         */
-        public GridPosition(char row, char column) {
-            this.row = row;
-            this.column = column;
-        }
+        public char col;
     }
 
     /**
-     * Constructor for the GuiToken.
-     *
-     * @param p      the player (either X or O)
-     * @param parent the GridButton that the token belongs to
-     * @param res    the resources used to load images
+     * Create a new GuiToken object
+     * @param p The Player (X or O) who created the token
+     * @param parent which button was tapped to create the token
+     * @param res the Resources object (used for loading image)
      */
     public GuiToken(Player p, GridButton parent, Resources res) {
+        gp = new GridPosition();
+        if (parent.isTopButton()) {
+            gp.row = 'A' - 1;
+            gp.col = parent.getLabel();
+        } else {
+            gp.row = parent.getLabel();
+            gp.col = '1' - 1;
+        }
+
         this.bounds = new RectF(parent.getBounds());
         velocity = new PointF();
-        destination = new PointF();
-        tolerance = bounds.height() / 10f;
         player = p;
         if (player == Player.X) {
             image = BitmapFactory.decodeResource(res, R.drawable.player_x);
         } else {
             image = BitmapFactory.decodeResource(res, R.drawable.player_o);
         }
-        image = Bitmap.createScaledBitmap(image, (int) bounds.width(), (int) bounds.height(), true);
-        if (parent.isTopButton()) {
-            moveDown();
-            position = new GridPosition((char) ('A' - 1), parent.getLabel());
-        } else {
-            moveRight();
-            position = new GridPosition(parent.getLabel(), (char) ('1' - 1));
-        }
+        image = Bitmap.createScaledBitmap(image, (int)bounds.width(), (int)bounds.height(), true);
     }
 
     /**
-     * Draw the token on the provided canvas.
-     *
-     * @param c the canvas on which to draw the token
+     * Draw the token at the correct location, using the correct
+     * image (X or O)
+     * @param c The Canvas object supplied by onDraw
      */
     public void draw(Canvas c) {
         c.drawBitmap(image, bounds.left, bounds.top, null);
     }
 
     /**
-     * Move the token towards its destination.
+     * Move the token by its current velocity.
+     * Stop when it reaches its destination location.
      */
     public void move() {
         if (velocity.x != 0 || velocity.y != 0) {
-            float dx = destination.x - bounds.left;
-            float dy = destination.y - bounds.top;
-            if (PointF.length(dx, dy) < tolerance) {
-                bounds.offsetTo(destination.x, destination.y);
-                velocity.set(0, 0);
-                movers--; // decrement when the token stops moving
+            if (stepCounter >= STEPS) {
+                if (gp.row > 'E' || gp.col > '5') {
+                    velocity.set(0, 1);
+                    falling = true;
+                } else {
+                    velocity.set(0, 0);
+                    movers--;
+                }
             } else {
+                stepCounter++;
                 bounds.offset(velocity.x, velocity.y);
             }
+        }
+        if (falling) {
+            velocity.y *= 20;
+            bounds.offset(velocity.x, velocity.y);
         }
     }
 
     /**
-     * Check if any tokens are currently moving.
-     *
-     * @return true if any token is moving, false otherwise
+     * Helper method for tokens created by the top row of buttons
      */
-    public static boolean isAnyTokenMoving() {
-        return movers > 0;
+    public void startMovingDown() {
+        startMoving(0, bounds.width()/STEPS);
+        gp.row++;
     }
 
     /**
-     * Move the token downwards by setting its destination below its current position.
+     * Helper method for tokens created by the left column of buttons
      */
-    public void moveDown() {
-        setGoal(bounds.left, bounds.top + bounds.height());
+    public void startMovingRight() {
+        startMoving(bounds.width()/STEPS, 0);
+        gp.col++;
     }
 
     /**
-     * Move the token to the right by setting its destination to the right of its current position.
+     * Start moving the token with the given velocity
+     * @param vx The velocity in the x direction
+     * @param vy The velocity in the y direction
      */
-    public void moveRight() {
-        setGoal(bounds.left + bounds.width(), bounds.top);
+    private void startMoving(float vx, float vy) {
+        velocity.set(vx, vy);
+        movers++;
+        stepCounter = 0;
     }
 
     /**
-     * Check if the token is currently moving.
-     *
-     * @return true if the token is moving, false otherwise
+     * Is animation currently happening?
+     * @return true if the token is currently moving (i.e. has a non-zero velocity); false otherwise.
      */
     public boolean isMoving() {
         return (velocity.x > 0 || velocity.y > 0);
     }
 
-    /**
-     * Set the goal (destination) for the token's movement.
-     *
-     * @param x the x-coordinate of the destination
-     * @param y the y-coordinate of the destination
+     /**
+     * Check if any tokens are currently moving
+     * @return true if any tokens are moving; false otherwise
      */
-    private void setGoal(float x, float y) {
-        destination.set(x, y);
-        float dx = destination.x - bounds.left;
-        float dy = destination.y - bounds.top;
-        if (velocity.x == 0 && velocity.y == 0) {
-            movers++; // increment when the token starts moving
-        }
-        velocity.x = dx / 5f;
-        velocity.y = dy / 5f;
+    public static boolean anyMovers() {
+        return movers > 0;
     }
 
     /**
-     * Called every tick of the game loop, causing the token to move if necessary.
+     * Called on each tick to update the token's position
      */
     @Override
     public void onTick() {
         move();
+    }
+
+    /**
+     * Check if the token matches the given grid position
+     * @param row The row to check
+     * @param col The column to check
+     * @return true if the token matches the given position; false otherwise
+     */
+    public boolean matches(char row, char col) {
+        return (gp.row == row && gp.col == col);
+    }
+
+    /**
+     * Check if the token is off the screen
+     * @param screenHeight The height of the screen
+     * @return true if the token is off the screen; false otherwise
+     */
+    public boolean isInvisible(float screenHeight) {
+        return bounds.top > screenHeight;
+    }
+
+    /**
+     * Remove the token from the game
+     */
+    public void remove() {
+        if (isMoving()) {
+            movers--;
+        }
     }
 }

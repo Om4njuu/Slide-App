@@ -1,24 +1,25 @@
 package edu.byuh.cis.cs300.grid.ui;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
+import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import edu.byuh.cis.cs300.grid.logic.GameEngine;
 import edu.byuh.cis.cs300.grid.logic.GameHandler;
+import edu.byuh.cis.cs300.grid.logic.Player;
 import edu.byuh.cis.cs300.grid.logic.TickListener;
 
-/**
- * GridView represents the user interface for the game grid. It handles
- * the drawing of the grid and tokens, as well as user interactions like
- * pressing buttons and token movements.
- */
 public class GridView extends View implements TickListener {
 
     private GridLines grid;
@@ -26,12 +27,11 @@ public class GridView extends View implements TickListener {
     private GridButton[] buttons;
     private List<GuiToken> tokens;
     private GameEngine engine;
-    private GameHandler handler;
+    private GameHandler gameHandler;
 
     /**
-     * Constructor for GridView.
-     * 
-     * @param context the application context
+     * Constructor for GridView
+     * @param context The context of the application
      */
     public GridView(Context context) {
         super(context);
@@ -39,16 +39,13 @@ public class GridView extends View implements TickListener {
         buttons = new GridButton[10];
         tokens = new ArrayList<>();
         engine = new GameEngine();
-        handler = new GameHandler();
-        handler.registerListener(this);
+        gameHandler = new GameHandler();
+        gameHandler.registerListener(this);
     }
 
     /**
-     * This method is called when the view is drawn on the screen.
-     * It initializes the grid and buttons on the first run and redraws
-     * the grid and tokens on each subsequent draw.
-     *
-     * @param c the Canvas on which the background will be drawn
+     * Draw the grid and tokens on the canvas
+     * @param c The Canvas object supplied by onDraw
      */
     @Override
     public void onDraw(Canvas c) {
@@ -60,58 +57,68 @@ public class GridView extends View implements TickListener {
         }
 
         grid.draw(c);
-        for (GuiToken token : tokens) {
-            token.draw(c);
+
+        float screenHeight = getHeight();
+        Iterator<GuiToken> iterator = tokens.iterator();
+        while (iterator.hasNext()) {
+            GuiToken token = iterator.next();
+            if (token.isInvisible(screenHeight)) {
+                token.remove();
+                iterator.remove();
+                gameHandler.deregisterListener(token);
+            } else {
+                token.draw(c);
+            }
         }
-        for (GridButton b : buttons) {
-            b.draw(c);
+
+        for (GridButton button : buttons) {
+            button.draw(c);
         }
     }
 
     /**
-     * Handles user touch events. It processes button presses,
-     * moves tokens, and handles token movements.
-     *
-     * @param m the MotionEvent object containing full information about the event
-     * @return true if the event was handled, false otherwise
+     * Handle touch events on the grid
+     * @param m The MotionEvent object
+     * @return true if the event was handled; false otherwise
      */
     @Override
     public boolean onTouchEvent(MotionEvent m) {
-        if (GuiToken.isAnyTokenMoving()) {
-            return true; // Ignore touch events if tokens are still moving
-        }
-
         if (m.getAction() == MotionEvent.ACTION_DOWN) {
-            float x = m.getX();
-            float y = m.getY();
-            boolean missed = true;
-            for (GridButton b : buttons) {
-                if (b.contains(x, y)) {
-                    b.press();
-                    GuiToken token = new GuiToken(engine.getCurrentPlayer(), b, getResources());
-                    engine.submitMove(b.getLabel());
-                    tokens.add(token);
-                    handler.registerListener(token);
-                    handleTokenMovement(token, b);
-                    missed = false;
+            if (!GuiToken.anyMovers()) {
+                float x = m.getX();
+                float y = m.getY();
+                boolean missed = true;
+                for (GridButton b : buttons) {
+                    if (b.contains(x, y)) {
+                        b.press();
+                        GuiToken token = new GuiToken(engine.getCurrentPlayer(), b, getResources());
+                        engine.submitMove(b.getLabel());
+                        tokens.add(token);
+                        gameHandler.registerListener(token);
+                        setupAnimation(b, token);
+                        missed = false;
+
+                        Player winner = engine.checkForWin();
+                        if (winner != Player.BLANK) {
+                            showWinnerDialog(winner);
+                        }
+                    }
                 }
-            }
-            if (missed) {
-                Toast t = Toast.makeText(getContext(), "Please touch a button", Toast.LENGTH_SHORT);
-                t.show();
+                if (missed) {
+                    Toast t = Toast.makeText(getContext(), "Please touch a button", Toast.LENGTH_SHORT);
+                    t.show();
+                }
             }
         } else if (m.getAction() == MotionEvent.ACTION_UP) {
             for (GridButton b : buttons) {
                 b.release();
             }
         }
-        invalidate();
         return true;
     }
 
     /**
-     * This method is called at regular intervals (ticks) to update the game state.
-     * It forces the view to be redrawn on each tick.
+     * Called on each tick to update the grid view
      */
     @Override
     public void onTick() {
@@ -119,8 +126,40 @@ public class GridView extends View implements TickListener {
     }
 
     /**
-     * Initializes the grid layout and positions the buttons on the grid.
-     * This method is only called during the first drawing of the view.
+     * Show a dialog to announce the winner
+     * @param winner The player who won the game
+     */
+    private void showWinnerDialog(Player winner) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("GAME IS DONE!");
+    
+        // Customize the message based on the winner
+        String message;
+        if (winner == Player.O) {
+            message = "Padthai wins! Play again?";
+        } else if (winner == Player.X) {
+            message = "Thai Temple wins! Play again?";
+        } else {
+            message = "It's a Tie! Play again?";
+        }
+    
+        builder.setMessage(message);
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                engine.clear();
+                tokens.clear();
+                invalidate();
+            }
+        });
+        builder.setNegativeButton("No", (dialog, which) -> {
+            ((Activity) getContext()).finish();
+        });
+        builder.show();
+    }
+
+    /**
+     * Initialize the grid and buttons
      */
     private void init() {
         float w = getWidth();
@@ -147,57 +186,51 @@ public class GridView extends View implements TickListener {
     }
 
     /**
-     * Handles the movement of tokens based on button presses. It checks
-     * whether a button belongs to the top row or the left column and moves
-     * the tokens accordingly.
-     *
-     * @param newToken the newly created token to be moved
-     * @param button the button that was pressed to create the token
+     * Setup the animation for the token
+     * @param b The GridButton that was pressed
+     * @param tok The GuiToken to animate
      */
-    private void handleTokenMovement(GuiToken newToken, GridButton button) {
+    private void setupAnimation(GridButton b, GuiToken tok) {
         List<GuiToken> neighbors = new ArrayList<>();
-        neighbors.add(newToken);
-        char col = button.getLabel();
-
-        if (button.isTopButton()) {
+        neighbors.add(tok);
+        if (b.isTopButton()) {
+            char col = b.getLabel();
             for (char row = 'A'; row <= 'E'; row++) {
-                GuiToken token = findTokenAtPosition(row, col);
-                if (token != null) {
-                    neighbors.add(token);
+                GuiToken other = findTokenAtPosition(row, col);
+                if (other != null) {
+                    neighbors.add(other);
                 } else {
                     break;
                 }
             }
             for (GuiToken token : neighbors) {
-                token.moveDown();
-                token.position.row++;
+                token.startMovingDown();
             }
-        } else if (button.isLeftButton()) {
-            for (char column = '1'; column <= '5'; column++) {
-                GuiToken token = findTokenAtPosition(button.getLabel(), column);
-                if (token != null) {
-                    neighbors.add(token);
+        } else {
+            char row = b.getLabel();
+            for (char col = '1'; col <= '5'; col++) {
+                GuiToken other = findTokenAtPosition(row, col);
+                if (other != null) {
+                    neighbors.add(other);
                 } else {
                     break;
                 }
             }
             for (GuiToken token : neighbors) {
-                token.moveRight();
-                token.position.column++;
+                token.startMovingRight();
             }
         }
     }
 
     /**
-     * Searches for a token at a given grid position.
-     *
-     * @param row the row character (A-E) of the grid
-     * @param column the column character (1-5) of the grid
-     * @return the GridToken at the given position, or null if no token is found
+     * Find a token at the given grid position
+     * @param row The row to check
+     * @param col The column to check
+     * @return The GuiToken at the given position, or null if none found
      */
-    private GuiToken findTokenAtPosition(char row, char column) {
+    private GuiToken findTokenAtPosition(char row, char col) {
         for (GuiToken token : tokens) {
-            if (token.position.row == row && token.position.column == column) {
+            if (token.matches(row, col)) {
                 return token;
             }
         }

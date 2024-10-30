@@ -51,6 +51,6 @@ public class GameHandler extends Handler {
         for (TickListener listener : listeners) {
             listener.onTick();
         }
-        sendMessageDelayed(obtainMessage(), 100);
+        sendMessageDelayed(obtainMessage(), 16);
     }
 }
