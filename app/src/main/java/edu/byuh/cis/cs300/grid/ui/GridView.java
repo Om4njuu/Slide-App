@@ -12,16 +12,19 @@ import android.widget.Toast;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 import edu.byuh.cis.cs300.grid.logic.GameEngine;
 import edu.byuh.cis.cs300.grid.logic.GameHandler;
+import edu.byuh.cis.cs300.grid.logic.GameMode;
 import edu.byuh.cis.cs300.grid.logic.Player;
 import edu.byuh.cis.cs300.grid.logic.TickListener;
 
 public class GridView extends View implements TickListener {
 
+    private GameMode gameMode = GameMode.ONE_PLAYER;
     private GridLines grid;
     private boolean firstRun;
     private GridButton[] buttons;
@@ -41,6 +44,7 @@ public class GridView extends View implements TickListener {
         engine = new GameEngine();
         gameHandler = new GameHandler();
         gameHandler.registerListener(this);
+        showGameModeDialog();
     }
 
     /**
@@ -59,27 +63,24 @@ public class GridView extends View implements TickListener {
         grid.draw(c);
 
         float screenHeight = getHeight();
-        Iterator<GuiToken> iterator = tokens.iterator();
-        while (iterator.hasNext()) {
-            GuiToken token = iterator.next();
+        tokens.removeIf(token -> {
             if (token.isInvisible(screenHeight)) {
                 token.remove();
-                iterator.remove();
                 gameHandler.deregisterListener(token);
-            } else {
-                token.draw(c);
+                return true;
             }
-        }
+            return false;
+        });
 
-        for (GridButton button : buttons) {
-            button.draw(c);
-        }
+        tokens.forEach(token -> token.draw(c));
+        Arrays.stream(buttons).forEach(button -> button.draw(c));
     }
 
     /**
-     * Handle touch events on the grid
-     * @param m The MotionEvent object
-     * @return true if the event was handled; false otherwise
+     * Handles touch events on the GridView.
+     *
+     * @param m the MotionEvent object containing full information about the event.
+     * @return true if the event was handled, false otherwise.
      */
     @Override
     public boolean onTouchEvent(MotionEvent m) {
@@ -101,6 +102,8 @@ public class GridView extends View implements TickListener {
                         Player winner = engine.checkForWin();
                         if (winner != Player.BLANK) {
                             showWinnerDialog(winner);
+                        } else {
+                            handleComputerTurn();
                         }
                     }
                 }
@@ -115,6 +118,43 @@ public class GridView extends View implements TickListener {
             }
         }
         return true;
+    }
+
+    /**
+     * Handles the computer's turn in a one-player game mode.
+     * If the current player is the computer (Player.O), it simulates a delay to mimic thinking time,
+     * selects a random button, and performs the move.
+     * 
+     * The method runs in a separate thread to avoid blocking the main UI thread.
+     * After the move is made, it checks for a winner and displays a dialog if there is one.
+     * 
+     * @throws InterruptedException if the thread is interrupted while sleeping
+     */
+    private void handleComputerTurn() {
+        if (gameMode == GameMode.ONE_PLAYER && engine.getCurrentPlayer() == Player.O) {
+            new Thread(() -> {
+                try {
+                    Thread.sleep(500); //delay to simulate thinking time
+                    int randomIndex = (int) (Math.random() * buttons.length);
+                    GridButton randomButton = buttons[randomIndex];
+                    post(() -> {
+                        randomButton.press();
+                        GuiToken token = new GuiToken(engine.getCurrentPlayer(), randomButton, getResources());
+                        engine.submitMove(randomButton.getLabel());
+                        tokens.add(token);
+                        gameHandler.registerListener(token);
+                        setupAnimation(randomButton, token);
+
+                        Player winner = engine.checkForWin();
+                        if (winner != Player.BLANK) {
+                            showWinnerDialog(winner);
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
     }
 
     /**
@@ -133,7 +173,7 @@ public class GridView extends View implements TickListener {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("GAME IS DONE!");
     
-        // Customize the message based on the winner
+        //customize the message based on the winner
         String message;
         if (winner == Player.O) {
             message = "Padthai wins! Play again?";
@@ -155,6 +195,33 @@ public class GridView extends View implements TickListener {
         builder.setNegativeButton("No", (dialog, which) -> {
             ((Activity) getContext()).finish();
         });
+        builder.show();
+    }
+
+    /**
+     * Displays a dialog for the user to choose the game mode.
+     * The dialog presents two options: "One Player" and "Two Player".
+     * If "One Player" is selected, the game mode is set to {@link GameMode#ONE_PLAYER}.
+     * If "Two Player" is selected, the game mode is set to {@link GameMode#TWO_PLAYER}.
+     * The dialog is not cancelable.
+     */
+    private void showGameModeDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Choose Game Mode");
+        builder.setMessage("Do you want to play in one-player mode or two-player mode?");
+        builder.setPositiveButton("One Player", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                gameMode = GameMode.ONE_PLAYER;
+            }
+        });
+        builder.setNegativeButton("Two Player", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                gameMode = GameMode.TWO_PLAYER;
+            }
+        });
+        builder.setCancelable(false);
         builder.show();
     }
 

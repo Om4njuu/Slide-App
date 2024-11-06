@@ -48,9 +48,7 @@ public class GameHandler extends Handler {
      */
     @Override
     public void handleMessage(Message m) {
-        for (TickListener listener : listeners) {
-            listener.onTick();
-        }
+        listeners.forEach(TickListener::onTick);
         sendMessageDelayed(obtainMessage(), 16);
     }
 }

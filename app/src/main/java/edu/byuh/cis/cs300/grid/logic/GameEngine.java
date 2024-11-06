@@ -1,5 +1,8 @@
 package edu.byuh.cis.cs300.grid.logic;
 
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 /**
  * The GameBoard class is the "brains" of this program. It maintains the state
  * of the gameboard, handles moves, and decides who wins. The only thing it
@@ -40,11 +43,7 @@ public class GameEngine {
      * Just "blanks out" the gameboard.
      */
     public void clear() {
-        for (int i=0; i<DIM; i++) {
-            for (int j=0; j<DIM; j++) {
-                grid[i][j] = Player.BLANK;
-            }
-        }
+        Arrays.stream(grid).forEach(row -> Arrays.fill(row, Player.BLANK));
     }
 
     /**
@@ -58,10 +57,10 @@ public class GameEngine {
      */
     public void submitMove(char move) {
         if (move >= '1' && move <= '5') {
-            //vertical move, move stuff down
-            int col = Integer.parseInt(""+move)-1;
+            // vertical move, move stuff down
+            int col = Integer.parseInt("" + move) - 1;
             Player newVal = currentPlayer;
-            for (int i=0; i<DIM; i++) {
+            for (int i = 0; i < DIM; i++) {
                 if (grid[i][col] == Player.BLANK) {
                     grid[i][col] = newVal;
                     break;
@@ -71,12 +70,11 @@ public class GameEngine {
                     newVal = tmp;
                 }
             }
-
-        } else { //A-E
-            //horizontal move, move stuff right
-            int row = (int)(move - 'A');
+        } else { // A-E
+            // horizontal move, move stuff right
+            int row = (int) (move - 'A');
             Player newVal = currentPlayer;
-            for (int i=0; i<DIM; i++) {
+            for (int i = 0; i < DIM; i++) {
                 if (grid[row][i] == Player.BLANK) {
                     grid[row][i] = newVal;
                     break;
@@ -87,11 +85,7 @@ public class GameEngine {
                 }
             }
         }
-        if (currentPlayer == Player.X) {
-            currentPlayer = Player.O;
-        } else {
-            currentPlayer = Player.X;
-        }
+        currentPlayer = (currentPlayer == Player.X) ? Player.O : Player.X;
     }
 
     /**
@@ -105,81 +99,31 @@ public class GameEngine {
      */
     public Player checkForWin() {
         Player winner = Player.BLANK;
-        Player tmpWinner;
 
         //check all rows
-        for (int i=0; i<DIM; ++i) {
-            if (grid[i][0] != Player.BLANK) {
-                tmpWinner = grid[i][0];
-                for (int j=0; j<DIM; ++j) {
-                    if (grid[i][j] != tmpWinner) {
-                        tmpWinner = Player.BLANK;
-                        break;
-                    }
-                }
-                if (tmpWinner != Player.BLANK) {
-                    if (winner == Player.BLANK) {
-                        winner = tmpWinner;
-                    } else {
-                        return Player.TIE;
-                    }
-                }
-            }
-        }
+        winner = IntStream.range(0, DIM)
+                .mapToObj(i -> grid[i][0] != Player.BLANK && Arrays.stream(grid[i]).allMatch(p -> p == grid[i][0]) ? grid[i][0] : Player.BLANK)
+                .filter(p -> p != Player.BLANK)
+                .reduce(winner, (w, p) -> w == Player.BLANK ? p : Player.TIE);
+
+        if (winner != Player.BLANK) return winner;
 
         //check all columns
-        tmpWinner = Player.BLANK;
-        for (int i=0; i<DIM; ++i) {
-            if (grid[0][i] != Player.BLANK) {
-                tmpWinner = grid[0][i];
-                for (int j=0; j<DIM; ++j) {
-                    if (grid[j][i] != tmpWinner) {
-                        tmpWinner = Player.BLANK;
-                        break;
-                    }
-                }
-                if (tmpWinner != Player.BLANK) {
-                    if (winner == Player.BLANK) {
-                        winner = tmpWinner;
-                    } else {
-                        return Player.TIE;
-                    }
-                }
-            }
-        }
+        winner = IntStream.range(0, DIM)
+                .mapToObj(i -> grid[0][i] != Player.BLANK && IntStream.range(0, DIM).allMatch(j -> grid[j][i] == grid[0][i]) ? grid[0][i] : Player.BLANK)
+                .filter(p -> p != Player.BLANK)
+                .reduce(winner, (w, p) -> w == Player.BLANK ? p : Player.TIE);
 
-        //at this point, either there's a tie, or there's not.
-        //You can't have a tie with diagonals.
-        if (winner != Player.BLANK) {
-            return winner;
-        }
+        if (winner != Player.BLANK) return winner;
 
         //check top-left -> bottom-right diagonal
-        if (grid[0][0] != Player.BLANK) {
-            winner = grid[0][0];
-            for (int i=0; i<DIM; ++i) {
-                if (grid[i][i] != winner) {
-                    winner = Player.BLANK;
-                    break;
-                }
-            }
-            if (winner != Player.BLANK) {
-                return winner; //5 in a diagonal!
-            }
+        if (grid[0][0] != Player.BLANK && IntStream.range(0, DIM).allMatch(i -> grid[i][i] == grid[0][0])) {
+            return grid[0][0];
         }
 
         //check bottom-left -> top-right diagonal
-        if (grid[DIM-1][0] != Player.BLANK) {
-            winner = grid[DIM-1][0];
-            for (int i=0; i<DIM; ++i) {
-                if (grid[DIM-1-i][i] != winner) {
-                    winner = Player.BLANK;
-                    break;
-                }
-            }
-            if (winner != Player.BLANK) {
-                return winner; //5 in a diagonal!
-            }
+        if (grid[DIM-1][0] != Player.BLANK && IntStream.range(0, DIM).allMatch(i -> grid[DIM-1-i][i] == grid[DIM-1][0])) {
+            return grid[DIM-1][0];
         }
 
         return winner;

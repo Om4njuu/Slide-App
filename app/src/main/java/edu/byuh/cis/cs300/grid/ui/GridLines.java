@@ -1,5 +1,7 @@
 package edu.byuh.cis.cs300.grid.ui;
 
+import java.util.stream.IntStream;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -56,13 +58,10 @@ public class GridLines {
      * @param c the Canvas object, provided by the View
      */
     public void draw(Canvas c) {
-        for (int i=0; i<=dim; i++) {
-            c.drawLine(bounds.left, bounds.top + cellWidth*i, bounds.right, bounds.top + cellWidth*i, paint);
-        }
-        for (int i=0; i<=dim; i++) {
-            c.drawLine(bounds.left + cellWidth*i, bounds.top, bounds.left + cellWidth*i, bounds.bottom, paint);
-        }
+        IntStream.rangeClosed(0, dim).forEach(i -> {
+            c.drawLine(bounds.left, bounds.top + cellWidth * i, bounds.right, bounds.top + cellWidth * i, paint);
+            c.drawLine(bounds.left + cellWidth * i, bounds.top, bounds.left + cellWidth * i, bounds.bottom, paint);
+        });
     }
-
 }
 
