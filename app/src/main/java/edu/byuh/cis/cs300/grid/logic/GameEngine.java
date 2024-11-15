@@ -1,63 +1,43 @@
 package edu.byuh.cis.cs300.grid.logic;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
-/**
- * The GameBoard class is the "brains" of this program. It maintains the state
- * of the gameboard, handles moves, and decides who wins. The only thing it
- * does NOT do is handle user input/output. That part is handled by the Main class.
- * @author draperg
- *
- */
 public class GameEngine {
 
-    /**
-     * grid is a two-dimensional (5x5) array representing the actual gameboard
-     */
-    private Player[][] grid;
-
-    /**
-     * DIM is set to 5. Change this if you want a bigger/smaller gameboard.
-     * The "true" Slide game uses a 5x5 board.
-     */
-    private final int DIM = 5;
-
-    /**
-     * keeps track of whose turn it is (either Player.X or Player.O)
-     */
+    private static Player[][] grid;
+    private static final int DIM = 5;
     private Player currentPlayer;
+    private AI ai;
 
-    /**
-     * Constructor for our GameBoard class. Initializes the gameboard to blank.
-     * Arbitrarily sets X as the first player. I guess you could change it to O
-     * if you want. Or better yet, make it random.
-     */
     public GameEngine() {
         grid = new Player[DIM][DIM];
         clear();
         currentPlayer = Player.X;
+        ai = new AI();
     }
 
     /**
-     * Just "blanks out" the gameboard.
+     * Clears the game board and resets the current player to X.
      */
     public void clear() {
-        Arrays.stream(grid).forEach(row -> Arrays.fill(row, Player.BLANK));
+        IntStream.range(0, DIM).forEach(i -> 
+            IntStream.range(0, DIM).forEach(j -> 
+                grid[i][j] = Player.BLANK
+            )
+        );
     }
 
     /**
-     * This method processes a single move for the current player. The input parameter is the row or column the user selected.
-     * Tokens are "inserted" into the top of the grid (for vertical moves) or into the left side (for horizontal moves).
-     * Tokens move from top to bottom (for vertical moves) or from left to right (for horizontal moves).
-     * Existing tokens slide down (or right) to make way for the new tokens. If a column is full, the bottommost token
-     * is removed. If a row is full, the rightmost token is removed.
-     * At the conclusion of a move, the currentPlayer variable is toggled (X to O, or O to X).
-     * @param move one of the characters '1', '2', '3', '4', '5' (for vertical moves) or 'A', 'B', 'C', 'D', 'E' (for horizontal moves). Any other values will result in buggy results.
+     * Submit a move to the game engine. The move should be a letter from A to E
+     * or a number from 1 to 5. The letter will place the move in the corresponding
+     * row, and the number will place the move in the corresponding column.
+     * If the location is already occupied, the move will be placed in the first
+     * available position in that row or column.
+     * @param move The move to submit. Should be a letter from A to E or a number
+     *             from 1 to 5.
      */
     public void submitMove(char move) {
         if (move >= '1' && move <= '5') {
-            // vertical move, move stuff down
             int col = Integer.parseInt("" + move) - 1;
             Player newVal = currentPlayer;
             for (int i = 0; i < DIM; i++) {
@@ -70,8 +50,7 @@ public class GameEngine {
                     newVal = tmp;
                 }
             }
-        } else { // A-E
-            // horizontal move, move stuff right
+        } else {
             int row = (int) (move - 'A');
             Player newVal = currentPlayer;
             for (int i = 0; i < DIM; i++) {
@@ -89,51 +68,109 @@ public class GameEngine {
     }
 
     /**
-     * Checks all rows, columns and the two diagonals for five matching tokens in a row.
-     * I'll explain the logic for rows. The logic for columns and diagonals are analogous.
-     * For each of the five rows, check the value of the leftmost element. If it's not blank,
-     * loop through the remaining four elements to see if they match the first one. If
-     * they do, stop and declare that player the winner. But if any does not match the
-     * first one, skip that row and search the next row for matches in the same manner.
-     * @return the value of the winning player, X or O or TIE. Returns BLANK if no one has yet won (the most common state).
+     * Check if there is a winner. A winner is a player that has all of their
+     * marks in a row, column, or diagonal. If there is no winner, return
+     * Player.BLANK.
+     * @return The player that has won, or Player.BLANK if there is no winner.
      */
-    public Player checkForWin() {
+    public static Player checkForWin() {
         Player winner = Player.BLANK;
 
         //check all rows
-        winner = IntStream.range(0, DIM)
-                .mapToObj(i -> grid[i][0] != Player.BLANK && Arrays.stream(grid[i]).allMatch(p -> p == grid[i][0]) ? grid[i][0] : Player.BLANK)
-                .filter(p -> p != Player.BLANK)
-                .reduce(winner, (w, p) -> w == Player.BLANK ? p : Player.TIE);
-
-        if (winner != Player.BLANK) return winner;
+        for (int i = 0; i < 5; i++) {
+            int finalI = i;
+            if (grid[i][0] != Player.BLANK && IntStream.range(0, 5).allMatch(j -> grid[finalI][j] == grid[finalI][0])) {
+                return grid[i][0];
+            }
+        }
 
         //check all columns
-        winner = IntStream.range(0, DIM)
-                .mapToObj(i -> grid[0][i] != Player.BLANK && IntStream.range(0, DIM).allMatch(j -> grid[j][i] == grid[0][i]) ? grid[0][i] : Player.BLANK)
-                .filter(p -> p != Player.BLANK)
-                .reduce(winner, (w, p) -> w == Player.BLANK ? p : Player.TIE);
+        for (int i = 0; i < 5; i++) {
+            int finalI = i;
+            if (grid[0][i] != Player.BLANK && IntStream.range(0, 5).allMatch(j -> grid[j][finalI] == grid[0][finalI])) {
+                return grid[0][i];
+            }
+        }
 
-        if (winner != Player.BLANK) return winner;
-
-        //check top-left -> bottom-right diagonal
-        if (grid[0][0] != Player.BLANK && IntStream.range(0, DIM).allMatch(i -> grid[i][i] == grid[0][0])) {
+        //check top-left to bottom-right diagonal
+        if (grid[0][0] != Player.BLANK && IntStream.range(0, 5).allMatch(i -> grid[i][i] == grid[0][0])) {
             return grid[0][0];
         }
 
-        //check bottom-left -> top-right diagonal
-        if (grid[DIM-1][0] != Player.BLANK && IntStream.range(0, DIM).allMatch(i -> grid[DIM-1-i][i] == grid[DIM-1][0])) {
-            return grid[DIM-1][0];
+        //check bottom-left to top-right diagonal
+        if (grid[4][0] != Player.BLANK && IntStream.range(0, 5).allMatch(i -> grid[4 - i][i] == grid[4][0])) {
+            return grid[4][0];
         }
 
         return winner;
     }
 
     /**
-     * returns the value of the current player (X or O).
-     * @return current player
+     * Retrieves the current player.
+     * 
+     * @return The player whose turn it currently is.
      */
     public Player getCurrentPlayer() {
         return currentPlayer;
+    }
+
+    /**
+     * Sets the current player in the game engine.
+     * 
+     * @param player The player to set as the current player.
+     */
+    public void setCurrentPlayer(Player player) {
+        this.currentPlayer = player;
+    }
+
+    /**
+     * Executes a move on the specified grid for the given player.
+     * The move can be a character from '1' to '5' for column placement or 
+     * from 'A' to 'E' for row placement. The player's symbol is placed in 
+     * the first available blank position in the specified row or column.
+     *
+     * @param move The move to execute, either a character '1'-'5' for column
+     *             or 'A'-'E' for row.
+     * @param player The player making the move.
+     * @param grid The grid where the move is to be executed.
+     */
+    public static void doOneMove(char move, Player player, Player[][] grid) {
+        if (move >= '1' && move <= '5') {
+            int col = move - '1';
+            for (int i = 0; i < 5; i++) {
+                if (grid[i][col] == Player.BLANK) {
+                    grid[i][col] = player;
+                    break;
+                }
+            }
+        } else {
+            int row = move - 'A';
+            for (int i = 0; i < 5; i++) {
+                if (grid[row][i] == Player.BLANK) {
+                    grid[row][i] = player;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Suggests the next move for the current player based on the current state of the game.
+     * Delegates the decision-making to the AI component, which analyzes the grid and the current player.
+     * 
+     * @return A character representing the suggested move, either a row ('A'-'E') or column ('1'-'5').
+     */
+    public char suggestNextMove() {
+        return ai.getSuggestedMove(grid, currentPlayer);
+    }
+
+    /**
+     * Determines the opponent player.
+     *
+     * @param player The current player.
+     * @return The opponent player, either Player.O if the current player is Player.X, or Player.X if the current player is Player.O.
+     */
+    public static Player otherPlayer(Player player) {
+        return (player == Player.X) ? Player.O : Player.X;
     }
 }

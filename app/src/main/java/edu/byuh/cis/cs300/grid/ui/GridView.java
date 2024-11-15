@@ -9,11 +9,9 @@ import android.graphics.Color;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import edu.byuh.cis.cs300.grid.logic.GameEngine;
@@ -121,35 +119,40 @@ public class GridView extends View implements TickListener {
     }
 
     /**
-     * Handles the computer's turn in a one-player game mode.
-     * If the current player is the computer (Player.O), it simulates a delay to mimic thinking time,
-     * selects a random button, and performs the move.
-     * 
-     * The method runs in a separate thread to avoid blocking the main UI thread.
-     * After the move is made, it checks for a winner and displays a dialog if there is one.
-     * 
-     * @throws InterruptedException if the thread is interrupted while sleeping
+     * Handles the computer's turn in a one-player game mode. This method is invoked
+     * when it's the computer's turn to play as Player O. It calculates the computer's
+     * move, animates the move, and checks for a winner.
      */
     private void handleComputerTurn() {
         if (gameMode == GameMode.ONE_PLAYER && engine.getCurrentPlayer() == Player.O) {
             new Thread(() -> {
                 try {
-                    Thread.sleep(500); //delay to simulate thinking time
-                    int randomIndex = (int) (Math.random() * buttons.length);
-                    GridButton randomButton = buttons[randomIndex];
-                    post(() -> {
-                        randomButton.press();
-                        GuiToken token = new GuiToken(engine.getCurrentPlayer(), randomButton, getResources());
-                        engine.submitMove(randomButton.getLabel());
-                        tokens.add(token);
-                        gameHandler.registerListener(token);
-                        setupAnimation(randomButton, token);
-
-                        Player winner = engine.checkForWin();
-                        if (winner != Player.BLANK) {
-                            showWinnerDialog(winner);
+                    Thread.sleep(500); // delay to simulate thinking time
+                    char suggestedMove = engine.suggestNextMove();
+                    GridButton selectedButton = null;
+                    for (GridButton button : buttons) {
+                        if (button.getLabel() == suggestedMove) {
+                            selectedButton = button;
+                            break;
                         }
-                    });
+                    }
+                    if (selectedButton != null) {
+                        GridButton finalSelectedButton = selectedButton;
+                        post(() -> {
+                            finalSelectedButton.press();
+                            GuiToken token = new GuiToken(engine.getCurrentPlayer(), finalSelectedButton, getResources());
+                            engine.submitMove(finalSelectedButton.getLabel());
+                            tokens.add(token);
+                            gameHandler.registerListener(token);
+                            setupAnimation(finalSelectedButton, token);
+                            Player winner = engine.checkForWin();
+                            if (winner != Player.BLANK) {
+                                showWinnerDialog(winner);
+                            } else {
+                                postDelayed(() -> finalSelectedButton.release(), 200); // delay before releasing the button
+                            }
+                        });
+                    }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -189,6 +192,7 @@ public class GridView extends View implements TickListener {
             public void onClick(DialogInterface dialog, int which) {
                 engine.clear();
                 tokens.clear();
+                engine.setCurrentPlayer(Player.X); //reset current player to X
                 invalidate();
             }
         });
