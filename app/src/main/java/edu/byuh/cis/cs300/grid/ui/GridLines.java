@@ -24,6 +24,12 @@ public class GridLines {
      * @param x the leftmost x coordinate
      * @param y the topmost y coordinate
      * @param cellWidth how wide each cell should be
+     * @param lineWidth how thick the lines should be
+     * @param color the color of the lines
+     * @param style the style of the lines
+     * @param dim the number of cells in each row and column
+     * @param bounds the bounding box of the grid
+     * @param paint the Paint object used to draw the lines
      */
     public GridLines(float x, float y, float cellWidth) {
         this.cellWidth = cellWidth;
@@ -31,7 +37,7 @@ public class GridLines {
         bounds = new RectF(x, y, x+cellWidth*dim, y+cellWidth*dim);
         paint = new Paint();
         paint.setStrokeWidth(lineWidth);
-        paint.setColor(Color.BLACK);
+        paint.setColor(Color.WHITE);
         paint.setStyle(Style.STROKE);
     }
 

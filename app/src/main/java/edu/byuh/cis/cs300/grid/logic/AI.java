@@ -92,39 +92,11 @@ public class AI {
         }
 
         /**
-         * Retrieves the minimum score from the list of child Check instances.
-         * 
-         * @return the minimum score among the children or Integer.MAX_VALUE if there are no children.
-         */
-        public int getMinimumScoreOfChildren() {
-            return children.stream().mapToInt(Check::getScore).min().orElse(Integer.MAX_VALUE);
-        }
-
-
-        /**
          * Retrieves the score for the current state of the game.
          * @return The score for the current state of the game.
          */
         public int getScore() {
             return this.currentScore;
-        }
-
-        /**
-         * Retrieves the first move in the path of moves taken.
-         * 
-         * @return the first character representing the initial move in the path.
-         */
-        public char getFirstStepInPath() {
-            return this.path.charAt(0);
-        }
-
-        /**
-         * Retrieves the list of child Check instances.
-         * 
-         * @return The list of child Check instances, or an empty list if there are no children.
-         */
-        public List<Check> getChildren() {
-            return this.children;
         }
 
         /**

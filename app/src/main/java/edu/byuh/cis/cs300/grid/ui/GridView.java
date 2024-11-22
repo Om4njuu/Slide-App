@@ -1,14 +1,19 @@
 package edu.byuh.cis.cs300.grid.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import androidx.appcompat.widget.AppCompatImageView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,31 +23,83 @@ import edu.byuh.cis.cs300.grid.logic.GameEngine;
 import edu.byuh.cis.cs300.grid.logic.GameHandler;
 import edu.byuh.cis.cs300.grid.logic.GameMode;
 import edu.byuh.cis.cs300.grid.logic.Player;
+import edu.byuh.cis.cs300.grid.Prefs;
 import edu.byuh.cis.cs300.grid.logic.TickListener;
+import edu.byuh.cis.cs300.grid.R;
 
-public class GridView extends View implements TickListener {
+public class GridView extends AppCompatImageView implements TickListener {
 
-    private GameMode gameMode = GameMode.ONE_PLAYER;
+    private GameMode gameMode;
     private GridLines grid;
     private boolean firstRun;
     private GridButton[] buttons;
     private List<GuiToken> tokens;
     private GameEngine engine;
     private GameHandler gameHandler;
+    private MediaPlayer song;
+    private boolean spaceDir;
+    private MediaPlayer fallSound;
+    private MediaPlayer slideSound;
+    private MediaPlayer buttonSound;
+    static int[] backgrounds = new int[] {0,1,2,3,4,5};
+
+
+    /**
+     * Pauses the background music if music is enabled.
+     */
+    public void pauseMusic() {
+        if (Prefs.getMusicPref(getContext())) {
+            song.pause();
+        }
+    }
+
+    /**
+     * Resumes the background music if music is enabled in preferences.
+     */
+    public void resumeMusic() {
+        if (Prefs.getMusicPref(getContext())) {
+            song.start();
+        }
+    }
+
+    /**
+     * Unloads the background music, releasing all associated resources.
+     */
+    public void unloadMusic() {
+        song.release();
+    }
 
     /**
      * Constructor for GridView
      * @param context The context of the application
+     * @param gameMode The game mode (ONE_PLAYER or TWO_PLAYER)
      */
-    public GridView(Context context) {
+    public GridView(Context context, GameMode gameMode) {
         super(context);
+        this.gameMode = gameMode;
         firstRun = true;
         buttons = new GridButton[10];
         tokens = new ArrayList<>();
         engine = new GameEngine();
         gameHandler = new GameHandler();
         gameHandler.registerListener(this);
-        showGameModeDialog();
+        song = MediaPlayer.create(getContext(), R.raw.space_music);
+        fallSound = MediaPlayer.create(getContext(), R.raw.space_fall);
+        slideSound = MediaPlayer.create(getContext(), R.raw.space_slide);
+        buttonSound = MediaPlayer.create(getContext(), R.raw.space_button);
+        song.setLooping(true);
+        setImageResource(R.drawable.bg1);
+        setScaleType(ScaleType.FIT_XY);
+        backgrounds[0] = R.drawable.bg1;
+        backgrounds[1] = R.drawable.bg2;
+        backgrounds[2] = R.drawable.bg3;
+        backgrounds[3] = R.drawable.bg4;
+        backgrounds[4] = R.drawable.bg5;
+        backgrounds[5] = R.drawable.bg6;
+        if (Prefs.getMusicPref(context)) {
+            song.start();
+        }
+        //showGameModeDialog();
     }
 
     /**
@@ -52,7 +109,7 @@ public class GridView extends View implements TickListener {
     @Override
     public void onDraw(Canvas c) {
         super.onDraw(c);
-        c.drawColor(Color.WHITE);
+//        c.drawColor(Color.WHITE);
         if (firstRun) {
             init();
             firstRun = false;
@@ -65,6 +122,7 @@ public class GridView extends View implements TickListener {
             if (token.isInvisible(screenHeight)) {
                 token.remove();
                 gameHandler.deregisterListener(token);
+                fallSound.start();
                 return true;
             }
             return false;
@@ -90,6 +148,7 @@ public class GridView extends View implements TickListener {
                 for (GridButton b : buttons) {
                     if (b.contains(x, y)) {
                         b.press();
+                        buttonSound.start();
                         GuiToken token = new GuiToken(engine.getCurrentPlayer(), b, getResources());
                         engine.submitMove(b.getLabel());
                         tokens.add(token);
@@ -127,7 +186,7 @@ public class GridView extends View implements TickListener {
         if (gameMode == GameMode.ONE_PLAYER && engine.getCurrentPlayer() == Player.O) {
             new Thread(() -> {
                 try {
-                    Thread.sleep(500); // delay to simulate thinking time
+                    Thread.sleep(1000); //delay to simulate thinking time
                     char suggestedMove = engine.suggestNextMove();
                     GridButton selectedButton = null;
                     for (GridButton button : buttons) {
@@ -140,6 +199,7 @@ public class GridView extends View implements TickListener {
                         GridButton finalSelectedButton = selectedButton;
                         post(() -> {
                             finalSelectedButton.press();
+                            buttonSound.start();
                             GuiToken token = new GuiToken(engine.getCurrentPlayer(), finalSelectedButton, getResources());
                             engine.submitMove(finalSelectedButton.getLabel());
                             tokens.add(token);
@@ -175,24 +235,26 @@ public class GridView extends View implements TickListener {
     private void showWinnerDialog(Player winner) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("GAME IS DONE!");
-    
+
         //customize the message based on the winner
         String message;
         if (winner == Player.O) {
-            message = "Padthai wins! Play again?";
+            message = "Sun wins! Play again?";
         } else if (winner == Player.X) {
-            message = "Thai Temple wins! Play again?";
+            message = "Moon wins! Play again?";
         } else {
             message = "It's a Tie! Play again?";
         }
-    
+
         builder.setMessage(message);
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 engine.clear();
                 tokens.clear();
-                engine.setCurrentPlayer(Player.X); //reset current player to X
+                engine.setCurrentPlayer(Player.X);
+                setImageResource(backgrounds[(int) (Math.random() * 6)]);
+                setScaleType(ScaleType.FIT_XY);
                 invalidate();
             }
         });
@@ -203,34 +265,10 @@ public class GridView extends View implements TickListener {
     }
 
     /**
-     * Displays a dialog for the user to choose the game mode.
-     * The dialog presents two options: "One Player" and "Two Player".
-     * If "One Player" is selected, the game mode is set to {@link GameMode#ONE_PLAYER}.
-     * If "Two Player" is selected, the game mode is set to {@link GameMode#TWO_PLAYER}.
-     * The dialog is not cancelable.
-     */
-    private void showGameModeDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Choose Game Mode");
-        builder.setMessage("Do you want to play in one-player mode or two-player mode?");
-        builder.setPositiveButton("One Player", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                gameMode = GameMode.ONE_PLAYER;
-            }
-        });
-        builder.setNegativeButton("Two Player", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                gameMode = GameMode.TWO_PLAYER;
-            }
-        });
-        builder.setCancelable(false);
-        builder.show();
-    }
-
-    /**
      * Initialize the grid and buttons
+     * This method is called when the view is first created
+     * and sets up the grid and buttons for the game
+     * board.
      */
     private void init() {
         float w = getWidth();
@@ -276,6 +314,7 @@ public class GridView extends View implements TickListener {
             }
             for (GuiToken token : neighbors) {
                 token.startMovingDown();
+                slideSound.start();
             }
         } else {
             char row = b.getLabel();
@@ -289,6 +328,7 @@ public class GridView extends View implements TickListener {
             }
             for (GuiToken token : neighbors) {
                 token.startMovingRight();
+                slideSound.start();
             }
         }
     }

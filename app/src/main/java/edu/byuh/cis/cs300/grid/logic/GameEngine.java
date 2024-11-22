@@ -1,5 +1,6 @@
 package edu.byuh.cis.cs300.grid.logic;
 
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class GameEngine {
@@ -77,20 +78,16 @@ public class GameEngine {
         Player winner = Player.BLANK;
 
         //check all rows
-        for (int i = 0; i < 5; i++) {
-            int finalI = i;
-            if (grid[i][0] != Player.BLANK && IntStream.range(0, 5).allMatch(j -> grid[finalI][j] == grid[finalI][0])) {
-                return grid[i][0];
-            }
-        }
+        winner = IntStream.range(0, DIM)
+                .mapToObj(i -> grid[i][0] != Player.BLANK && Arrays.stream(grid[i]).allMatch(p -> p == grid[i][0]) ? grid[i][0] : Player.BLANK)
+                .filter(p -> p != Player.BLANK)
+                .reduce(winner, (w, p) -> w == Player.BLANK ? p : Player.TIE);
 
         //check all columns
-        for (int i = 0; i < 5; i++) {
-            int finalI = i;
-            if (grid[0][i] != Player.BLANK && IntStream.range(0, 5).allMatch(j -> grid[j][finalI] == grid[0][finalI])) {
-                return grid[0][i];
-            }
-        }
+        winner = IntStream.range(0, DIM)
+                .mapToObj(i -> grid[0][i] != Player.BLANK && IntStream.range(0, DIM).allMatch(j -> grid[j][i] == grid[0][i]) ? grid[0][i] : Player.BLANK)
+                .filter(p -> p != Player.BLANK)
+                .reduce(winner, (w, p) -> w == Player.BLANK ? p : Player.TIE);
 
         //check top-left to bottom-right diagonal
         if (grid[0][0] != Player.BLANK && IntStream.range(0, 5).allMatch(i -> grid[i][i] == grid[0][0])) {
