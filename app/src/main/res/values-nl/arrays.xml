@@ -1,0 +1,13 @@
+<resources>
+    <string-array name="speed_entries">
+        <item>Snel</item>
+        <item>Medium</item>
+        <item>Langzaam</item>
+    </string-array>
+
+    <string-array name="theme_entries">
+        <item>Ruimte</item>
+        <item>Thailand</item>
+        <item>Bloemen</item>
+    </string-array>
+</resources>

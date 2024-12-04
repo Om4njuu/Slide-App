@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">Universal Slide</string>
+    <string name="title_activity_prefs">Zetting</string>
+    <string name="endgame_title">SPEL IS GEDAAN!</string>
+    <string name="about">Over het spel</string>
+    <string name="flower_about_message">Slide is een strategisch bordspel met twee modi: één speler (PvE) en twee spelers (PvP lokaal). Je speelt tegen de computer of je vriend, die een sterke hebzuchtige strategie gebruikt. Het spel wordt gespeeld op een 5x5 bord waarbij jij en de computer of je vriend om de beurt tokens van boven (1-5) of links (A-E) plaatsen. Tokens schuiven bestaande tokens over of naar beneden, waardoor ze mogelijk van het bord worden geduwd. Het doel is om vijf tokens op een rij te krijgen, horizontaal, verticaal of diagonaal. Jij speelt als maan, en de computer of je vriend speelt als zon. Geniet van de uitdaging!</string>
+    <string name="space_about_message">Slide is een strategisch bordspel met twee modi: één speler (PvE) en twee spelers (PvP lokaal). Je speelt tegen de computer of je vriend, die een sterke hebzuchtige strategie gebruikt. Het spel wordt gespeeld op een 5x5 bord waarbij jij en de computer of je vriend om de beurt tokens van boven (1-5) of links (A-E) plaatsen. Tokens schuiven bestaande tokens over of naar beneden, waardoor ze mogelijk van het bord worden geduwd. Het doel is om vijf tokens op een rij te krijgen, horizontaal, verticaal of diagonaal. Jij speelt als Padthai, en de computer of je vriend speelt als tempel. Geniet van de uitdaging!</string>
+    <string name="thai_about_message">Slide is een strategisch bordspel met twee modi: één speler (PvE) en twee spelers (PvP lokaal). Je speelt tegen de computer of je vriend, die een sterke hebzuchtige strategie gebruikt. Het spel wordt gespeeld op een 5x5 bord waarbij jij en de computer of je vriend om de beurt tokens van boven (1-5) of links (A-E) plaatsen. Tokens schuiven bestaande tokens over of naar beneden, waardoor ze mogelijk van het bord worden geduwd. Het doel is om vijf tokens op een rij te krijgen, horizontaal, verticaal of diagonaal. Jij speelt als lelie, en de computer of je vriend speelt als madeliefje. Geniet van de uitdaging!</string>
+    <string name="space_O_wins">"Zon wint! Opnieuw spelen?"</string>
+    <string name="space_X_wins">"Maan wint! Opnieuw spelen?"</string>
+    <string name="thai_O_wins">"Padthai wint! Opnieuw spelen?"</string>
+    <string name="thai_X_wins">"Tempel wint! Opnieuw spelen?"</string>
+    <string name="flower_O_wins">"Madeliefje wint! Opnieuw spelen?"</string>
+    <string name="flower_X_wins">"Lelie wint! Opnieuw spelen?"</string>
+    <string name="tie">"Het is een gelijkspel! Opnieuw spelen?"</string>
+    <string name="ok">Okeydokey!</string>
+    <string name="yes">Ja</string>
+    <string name="no">Nope</string>
+    <string name="speed_pref_title">Snelheid glijden</string>
+    <string name="speed_pref_summary">Hoe snel wil je dat het token glijdt?</string>
+    <string name="music_pref">Muziek</string>
+    <string name="music_on">Achtergrondmuziek zal spelen</string>
+    <string name="music_off">Achtergrondmuziek wordt NIET afgespeeld</string>
+    <string name="sound_effects_pref">Geluidseffecten</string>
+    <string name="sound_effects_on">Er wordt een schuifgeluid en een vallend geluid gespeeld</string>
+    <string name="sound_effects_off">Schuifgeluid en vallend geluid worden NIET afgespeeld</string>
+    <string name="out_of_bound">Raak een knop aan</string>
+    <string name="theme_pref_title">Thema</string>
+    <string name="theme_pref_summary">Selecteer een thema</string>
+    <string name="restart_title">Opnieuw opstarten vereist</string>
+    <string name="restart_message">De app moet opnieuw opstarten om het nieuwe thema toe te passen. Wil je nu opnieuw opstarten?</string>
+</resources>

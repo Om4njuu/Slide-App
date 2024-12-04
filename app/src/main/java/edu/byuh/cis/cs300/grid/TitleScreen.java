@@ -1,32 +1,80 @@
 package edu.byuh.cis.cs300.grid;
 
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.Locale;
 
 import edu.byuh.cis.cs300.grid.logic.GameMode;
+import android.media.MediaPlayer;
 
 public class TitleScreen extends AppCompatActivity {
 
     private ImageView iv;
+    private MediaPlayer mainMenuSong;
 
     /**
-     * Initializes the activity and sets the custom view for the title screen.
+     * Initializes the activity and displays the splash screen in the UI.
      *
      * @param b The saved instance state bundle.
      */
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        setLocale();
         iv = new ImageView(this);
-        iv.setImageResource(R.drawable.splash);
+        applyTheme();
         iv.setScaleType(ImageView.ScaleType.FIT_XY);
         setContentView(iv);
+
+        // Initialize the main menu song
+        mainMenuSong = MediaPlayer.create(this, R.raw.main_menu_music);
+        mainMenuSong.setLooping(true);
+
+        // Start the main menu song if music is enabled in preferences
+        if (Prefs.getMusicPref(this)) {
+            mainMenuSong.start();
+        }
+    }
+
+    /**
+     * Sets the locale to the device locale.
+     */
+    private void setLocale() {
+        Locale deviceLocale = Resources.getSystem().getConfiguration().locale;
+        Locale.setDefault(deviceLocale);
+        Resources resources = getResources();
+        Configuration config = resources.getConfiguration();
+        config.setLocale(deviceLocale);
+        createConfigurationContext(config);
+        resources.updateConfiguration(config, resources.getDisplayMetrics());
+    }
+
+    /**
+     * Apply the theme-based splash screen.
+     */
+    private void applyTheme() {
+        String theme = Prefs.getThemePref(this);
+        Locale deviceLocale = Resources.getSystem().getConfiguration().locale;
+        String languageCode = deviceLocale.getLanguage();
+
+        String resourceName = theme.toLowerCase() + "_splash_" + languageCode;
+        int resId = getResources().getIdentifier(resourceName, "drawable", getPackageName());
+
+        if (resId == 0) {
+            //fallback to default splash screen if the specific one is not found
+            resId = R.drawable.space_splash_en;
+        }
+
+        iv.setImageResource(resId);
     }
 
     /**
@@ -51,19 +99,26 @@ public class TitleScreen extends AppCompatActivity {
         if (m.getAction() == MotionEvent.ACTION_DOWN) {
             float x = m.getX(); //x-coordinate of the touch
             float y = m.getY(); //y-coordinate of the touch
-            float w = iv.getWidth(); // Width of the screen or image view
-            float h = iv.getHeight(); // Height of the screen or image view
+            float w = iv.getWidth(); //width of the screen or image view
+            float h = iv.getHeight(); //height of the screen or image view
             
-            // Top-left corner (About the Game)
+            //top-left corner (About the Game)
             if (x < w / 4 && y < h / 4) {
+                setLocale();
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("About the Game");
-                builder.setMessage("Slide is a strategic board game with two modes: one-player (PvE) and two-player (PvP local). You play against the computer or your friend, which uses a strong greedy strategy. The game is played on a 5x5 board where you and the computer or your friend take turns placing tokens from the top (1-5) or the left (A-E). Tokens slide existing ones over or down, possibly pushing them off the board. The goal is to get five tokens in a row horizontally, vertically, or diagonally. You play as moons, and the computer or your friend plays as suns. Enjoy the challenge!");
-                builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+                builder.setTitle(R.string.about);
+                String theme = Prefs.getThemePref(this);
+                Locale deviceLocale = Resources.getSystem().getConfiguration().locale;
+                String languageCode = deviceLocale.getLanguage();
+                String resourceName = theme.toLowerCase() + "_about_message";
+                int resId = getResources().getIdentifier(resourceName, "string", getPackageName());
+                builder.setMessage(resId != 0 ? getString(resId) : getString(R.string.space_about_message));
+                builder.setPositiveButton(R.string.ok, (dialog, which) -> dialog.dismiss());
                 builder.show();
             }
-            // Top-right corner (Settings)
+            //top-right corner (Settings)
             else if (x > (3 * w) / 4 && y < h / 4) {
+                setLocale(); // Ensure locale is set before launching the activity
                 Intent prefsIntent = new Intent(this, Prefs.class);
                 startActivity(prefsIntent);
             }
@@ -83,4 +138,42 @@ public class TitleScreen extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * Pauses the main menu music when the activity is paused.
+     * This is important so that the music doesn't continue playing when the
+     * user navigates away from the main menu or the screen is turned off.
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mainMenuSong.isPlaying()) {
+            mainMenuSong.pause();
+        }
+    }
+
+    /**
+     * Resumes the main menu music if music is enabled in preferences.
+     *
+     * This method is called when the activity is resumed, such as when the screen is turned
+     * on or the user returns to the app from another activity.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (Prefs.getMusicPref(this)) {
+            mainMenuSong.start();
+        }
+    }
+
+    /**
+     * Destroys the activity and releases the main menu music from memory.
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mainMenuSong != null) {
+            mainMenuSong.release();
+            mainMenuSong = null;
+        }
+    }
 }

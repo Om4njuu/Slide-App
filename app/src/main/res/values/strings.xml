@@ -1,4 +1,32 @@
 <resources>
-    <string name="app_name">Grid</string>
-    <string name="title_activity_prefs" />
+    <string name="app_name">Universal Slide</string>
+    <string name="title_activity_prefs">Settings</string>
+    <string name="endgame_title">GAME IS DONE!</string>
+    <string name="about">About the Game</string>
+    <string name="space_about_message">Slide is a strategic board game with two modes: one-player (PvE) and two-player (PvP local). You play against the computer or your friend, which uses a strong greedy strategy. The game is played on a 5x5 board where you and the computer or your friend take turns placing tokens from the top (1-5) or the left (A-E). Tokens slide existing ones over or down, possibly pushing them off the board. The goal is to get five tokens in a row horizontally, vertically, or diagonally. You play as moon, and the computer or your friend plays as sun. Enjoy the challenge!</string>
+    <string name="thai_about_message">Slide is a strategic board game with two modes: one-player (PvE) and two-player (PvP local). You play against the computer or your friend, which uses a strong greedy strategy. The game is played on a 5x5 board where you and the computer or your friend take turns placing tokens from the top (1-5) or the left (A-E). Tokens slide existing ones over or down, possibly pushing them off the board. The goal is to get five tokens in a row horizontally, vertically, or diagonally. You play as temple, and the computer or your friend plays as Padthai. Enjoy the challenge!</string>
+    <string name="flower_about_message">Slide is a strategic board game with two modes: one-player (PvE) and two-player (PvP local). You play against the computer or your friend, which uses a strong greedy strategy. The game is played on a 5x5 board where you and the computer or your friend take turns placing tokens from the top (1-5) or the left (A-E). Tokens slide existing ones over or down, possibly pushing them off the board. The goal is to get five tokens in a row horizontally, vertically, or diagonally. You play as lily, and the computer or your friend plays as daisy. Enjoy the challenge!</string>
+    <string name="space_O_wins">"Sun wins! Play again?"</string>
+    <string name="space_X_wins">"Moon wins! Play again?"</string>
+    <string name="thai_O_wins">"Padthai wins! Play again?"</string>
+    <string name="thai_X_wins">"Temple wins! Play again?"</string>
+    <string name="flower_O_wins">"Daisy wins! Play again?"</string>
+    <string name="flower_X_wins">"Lily wins! Play again?"</string>
+    <string name="tie">"It's a Tie! Play again?"</string>
+    <string name="ok">OK</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="speed_pref_title">Slide Speed</string>
+    <string name="speed_pref_summary">How fast you want the token to slide?</string>
+    <string name="music_pref">Music</string>
+    <string name="music_on">Background music will play</string>
+    <string name="music_off">Background music will NOT play</string>
+    <string name="sound_effects_pref">Sound Effects</string>
+    <string name="sound_effects_on">Slide sound and fall sound will play</string>
+    <string name="sound_effects_off">Slide sound and fall sound will NOT play</string>
+    <string name="out_of_bound">Please touch a button</string>
+    <string name="theme_pref_title">Theme</string>
+    <string name="theme_pref_summary">Select a theme</string>
+    <string name="restart_title">Restart Required</string>
+    <string name="restart_message">The app needs to restart to apply the new theme. Do you want to restart now?</string>
 </resources>

@@ -1,5 +1,6 @@
 package edu.byuh.cis.cs300.grid.ui;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -7,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.PointF;
 import android.graphics.RectF;
 
+import edu.byuh.cis.cs300.grid.Prefs;
 import edu.byuh.cis.cs300.grid.R;
 import edu.byuh.cis.cs300.grid.logic.Player;
 import edu.byuh.cis.cs300.grid.logic.TickListener;
@@ -19,8 +21,9 @@ public class GuiToken implements TickListener {
     private GridPosition gp;
     private static int movers = 0;
     private int stepCounter;
-    private final int STEPS = 11;
+    private int slideSpeed;
     private boolean falling = false;
+    private Context context;
 
     public class GridPosition {
         public char row;
@@ -33,7 +36,9 @@ public class GuiToken implements TickListener {
      * @param parent which button was tapped to create the token
      * @param res the Resources object (used for loading image)
      */
-    public GuiToken(Player p, GridButton parent, Resources res) {
+    public GuiToken(Player p, GridButton parent, Resources res, Context context) {
+        this.context = context;
+        slideSpeed = Prefs.getSpeedPref(context);
         gp = new GridPosition();
         if (parent.isTopButton()) {
             gp.row = 'A' - 1;
@@ -46,11 +51,29 @@ public class GuiToken implements TickListener {
         this.bounds = new RectF(parent.getBounds());
         velocity = new PointF();
         player = p;
-        if (player == Player.X) {
-            image = BitmapFactory.decodeResource(res, R.drawable.player_x);
+
+        // Load images based on theme preference
+        String theme = Prefs.getThemePref(context);
+        if (theme.equals("Thai")) {
+            if (player == Player.X) {
+                image = BitmapFactory.decodeResource(res, R.drawable.player_x_th);
+            } else {
+                image = BitmapFactory.decodeResource(res, R.drawable.player_o_th);
+            }
+        } else if (theme.equals("Space")) {
+            if (player == Player.X) {
+                image = BitmapFactory.decodeResource(res, R.drawable.player_x);
+            } else {
+                image = BitmapFactory.decodeResource(res, R.drawable.player_o);
+            }
         } else {
-            image = BitmapFactory.decodeResource(res, R.drawable.player_o);
+            if (player == Player.X) {
+                image = BitmapFactory.decodeResource(res, R.drawable.player_x_nl);
+            } else {
+                image = BitmapFactory.decodeResource(res, R.drawable.player_o_nl);
+            }
         }
+
         image = Bitmap.createScaledBitmap(image, (int)bounds.width(), (int)bounds.height(), true);
     }
 
@@ -69,7 +92,7 @@ public class GuiToken implements TickListener {
      */
     public void move() {
         if (velocity.x != 0 || velocity.y != 0) {
-            if (stepCounter >= STEPS) {
+            if (stepCounter >= slideSpeed) {
                 if (gp.row > 'E' || gp.col > '5') {
                     velocity.set(0, 1);
                     falling = true;
@@ -92,7 +115,7 @@ public class GuiToken implements TickListener {
      * Helper method for tokens created by the top row of buttons
      */
     public void startMovingDown() {
-        startMoving(0, bounds.width()/STEPS);
+        startMoving(0, bounds.width() / slideSpeed);
         gp.row++;
     }
 
@@ -100,7 +123,7 @@ public class GuiToken implements TickListener {
      * Helper method for tokens created by the left column of buttons
      */
     public void startMovingRight() {
-        startMoving(bounds.width()/STEPS, 0);
+        startMoving(bounds.width() / slideSpeed, 0);
         gp.col++;
     }
 
